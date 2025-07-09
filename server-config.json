@@ -1,0 +1,18 @@
+{
+  "server": {
+    "http": {
+      "port": 8080,
+      "endpoints": {
+        "uploadInvoice": "/UploadInvoice",
+        "queryInvoice": "/QueryInvoice"
+      }
+    },
+    "tcp": {
+      "host": "localhost",
+      "port": 8888
+    },
+    "database": {
+      "path": "server_database.db"
+    }
+  }
+} 
