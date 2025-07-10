@@ -329,7 +329,7 @@ public class HttpServer {
             
             // Ensure items exist and convert to map
             Map<String, Double> itemQuantities = new HashMap<>();
-            for (InvoiceUploadData.Item item : invoiceData.items) { // Using descriptive field name
+            for (InvoiceUploadData.Item item : invoiceData.items) {
                 if (!itemExists(item.name)) {
                     database.addItem(item.name, item.unitPrice);
                 }
