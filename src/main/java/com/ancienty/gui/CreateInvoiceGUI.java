@@ -6,6 +6,8 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.AbstractAction;
+import javax.swing.KeyStroke;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -49,6 +51,12 @@ public class CreateInvoiceGUI {
 
     private void initializeGUI() {
         frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        frame.addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosing(java.awt.event.WindowEvent e) {
+                cancel();
+            }
+        });
         frame.setLayout(new BorderLayout());
 
         // Title panel
@@ -119,6 +127,7 @@ public class CreateInvoiceGUI {
         txtSeries = new JTextField();
         txtSeries.setPreferredSize(FIELD_SIZE);
         styleTextField(txtSeries);
+        txtSeries.addActionListener(e -> txtNumber.requestFocus());
         panel.add(txtSeries, gbc);
 
         // Numara
@@ -128,6 +137,7 @@ public class CreateInvoiceGUI {
         txtNumber = new JTextField();
         txtNumber.setPreferredSize(FIELD_SIZE);
         styleTextField(txtNumber);
+        txtNumber.addActionListener(e -> selectCustomer());
         panel.add(txtNumber, gbc);
 
         return panel;
@@ -165,11 +175,17 @@ public class CreateInvoiceGUI {
 
         // Buttons
         gbc.gridx = 0; gbc.gridy = 0;
-        panel.add(createStyledButton("Ekle", BTN_W, BTN_H), gbc);
+        JButton btnAdd = createStyledButton("Ekle", BTN_W, BTN_H);
+        btnAdd.addActionListener(e -> addProduct());
+        panel.add(btnAdd, gbc);
         gbc.gridx = 1;
-        panel.add(createStyledButton("Düzenle", BTN_W, BTN_H), gbc);
+        JButton btnEdit = createStyledButton("Düzenle", BTN_W, BTN_H);
+        btnEdit.addActionListener(e -> editSelectedItem());
+        panel.add(btnEdit, gbc);
         gbc.gridx = 2;
-        panel.add(createStyledButton("Sil", BTN_W, BTN_H), gbc);
+        JButton btnDelete = createStyledButton("Sil", BTN_W, BTN_H);
+        btnDelete.addActionListener(e -> removeSelectedItem());
+        panel.add(btnDelete, gbc);
 
         // Table
         gbc.gridx = 0; gbc.gridy = 1; gbc.gridwidth = 3;
@@ -180,6 +196,24 @@ public class CreateInvoiceGUI {
         };
         itemTable = new JTable(tableModel);
         itemTable.setRowHeight(22);
+        itemTable.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                    editSelectedItem();
+                }
+            }
+        });
+        
+        // Add keyboard support for editing items
+        itemTable.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(
+            KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_ENTER, 0), "editItem");
+        itemTable.getActionMap().put("editItem", new AbstractAction() {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                editSelectedItem();
+            }
+        });
         JScrollPane scroll = new JScrollPane(itemTable);
         scroll.setPreferredSize(ITEM_TABLE_SIZE);
         panel.add(scroll, gbc);
@@ -206,11 +240,14 @@ public class CreateInvoiceGUI {
         txtDiscount = new JTextField("0");
         txtDiscount.setPreferredSize(FIELD_SIZE);
         styleTextField(txtDiscount);
+        txtDiscount.addActionListener(e -> calculateInvoice());
         panel.add(txtDiscount, gbc);
 
         // Calculate
         gbc.gridx = 2; gbc.gridwidth = 2;
-        panel.add(createStyledButton("Hesapla", BTN_W, BTN_H), gbc);
+        JButton btnCalculate = createStyledButton("Hesapla", BTN_W, BTN_H);
+        btnCalculate.addActionListener(e -> calculateInvoice());
+        panel.add(btnCalculate, gbc);
 
         // Totals
         gbc.gridy = 1; gbc.gridx = 0; gbc.gridwidth = 4; gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -462,8 +499,14 @@ public class CreateInvoiceGUI {
         double discount = 0;
         try {
             discount = Double.parseDouble(txtDiscount.getText().trim());
-            if (discount < 0) discount = 0;
-            if (discount > before) discount = before;
+            if (discount < 0) {
+                discount = 0;
+                txtDiscount.setText("0");
+            }
+            if (discount > before) {
+                discount = before;
+                txtDiscount.setText(String.format("%.2f", before));
+            }
         } catch (NumberFormatException ignored) {
             discount = 0;
             txtDiscount.setText("0");
@@ -504,6 +547,23 @@ public class CreateInvoiceGUI {
     }
 
     private void cancel() {
+        // Check if there are unsaved changes
+        if (!txtSeries.getText().trim().isEmpty() || 
+            !txtNumber.getText().trim().isEmpty() || 
+            selectedCustomer != null || 
+            !selectedItems.isEmpty()) {
+            
+            int result = JOptionPane.showConfirmDialog(frame,
+                "Kaydedilmemiş değişiklikler var. Çıkmak istediğinizden emin misiniz?",
+                "Çıkış Onayı",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE);
+                
+            if (result != JOptionPane.YES_OPTION) {
+                return;
+            }
+        }
+        
         frame.dispose();
         returnToMain.run();
     }

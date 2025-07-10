@@ -25,7 +25,6 @@ public class ServiceOperationsGUI {
     private static final int CONTROL_BUTTON_HEIGHT  = 30;
     private static final int CLOSE_BUTTON_WIDTH     = 120;
     private static final int CLOSE_BUTTON_HEIGHT    = 35;
-    private static final Dimension TEXTAREA_SIZE    = new Dimension(700, 240);
 
     private final Runnable returnToMain;
     private final JFrame   frame;
